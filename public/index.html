@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Facebook Share Count Demo</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --background: #f6f8fa;
+        --surface: #ffffff;
+        --text: #1f2933;
+        --accent: #1976d2;
+        --danger: #d32f2f;
+        --border: #d0d7de;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+          sans-serif;
+      }
+
+      body {
+        background: var(--background);
+        margin: 0;
+        padding: 2rem;
+        color: var(--text);
+      }
+
+      .container {
+        max-width: 720px;
+        margin: 0 auto;
+        background: var(--surface);
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+        border: 1px solid var(--border);
+      }
+
+      h1 {
+        margin-top: 0;
+        font-size: 2rem;
+      }
+
+      form {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
+
+      input[type='url'] {
+        flex: 1 1 320px;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        font-size: 1rem;
+      }
+
+      button {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        background: var(--accent);
+        color: white;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(25, 118, 210, 0.3);
+      }
+
+      .results {
+        padding: 1.5rem;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: rgba(25, 118, 210, 0.05);
+        display: none;
+      }
+
+      .results.active {
+        display: block;
+      }
+
+      .error {
+        color: var(--danger);
+      }
+
+      code {
+        padding: 0.15rem 0.35rem;
+        background: rgba(15, 23, 42, 0.08);
+        border-radius: 6px;
+      }
+
+      footer {
+        margin-top: 2rem;
+        text-align: center;
+        color: rgba(31, 41, 51, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <h1>Facebook Share Count Demo</h1>
+      <p>
+        Paste any public URL to inspect its share metrics using the Facebook
+        Graph API.
+      </p>
+
+      <form id="share-form">
+        <input
+          type="url"
+          name="url"
+          placeholder="https://example.com/article"
+          autocomplete="url"
+          required
+        />
+        <button type="submit">Lookup</button>
+      </form>
+
+      <section id="results" class="results">
+        <div id="result-content"></div>
+      </section>
+    </main>
+    <footer>
+      Built as a minimal example. The Facebook Graph share count API may require
+      an access token for certain URLs.
+    </footer>
+
+    <script>
+      const form = document.querySelector('#share-form');
+      const results = document.getElementById('results');
+      const resultContent = document.getElementById('result-content');
+      const submitButton = form.querySelector('button[type="submit"]');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(form);
+        const url = formData.get('url');
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Loading...';
+        results.classList.remove('active');
+        resultContent.innerHTML = '';
+
+        try {
+          const response = await fetch(`/api/shares?url=${encodeURIComponent(url)}`);
+          const payload = await response.json();
+
+          if (!response.ok || !payload.ok) {
+            const message = payload?.message ?? 'Unexpected error occurred.';
+            throw new Error(message);
+          }
+
+          const { data } = payload;
+          renderResult(data);
+        } catch (error) {
+          renderError(error.message);
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Lookup';
+        }
+      });
+
+      function renderResult(data) {
+        results.classList.add('active');
+        const prettyJson = JSON.stringify(data, null, 2);
+        resultContent.innerHTML = `
+          <h2>Share Count: ${data.shareCount}</h2>
+          <p><strong>Normalized URL</strong>: <code>${data.url}</code></p>
+          <details>
+            <summary>View raw engagement payload</summary>
+            <pre>${prettyJson}</pre>
+          </details>
+        `;
+      }
+
+      function renderError(message) {
+        results.classList.add('active');
+        resultContent.innerHTML = `<p class="error">${message}</p>`;
+      }
+    </script>
+  </body>
+</html>
