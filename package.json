@@ -1,0 +1,17 @@
+{
+  "name": "facebook-share-example-app",
+  "version": "1.0.0",
+  "description": "Example Express application that fetches Facebook share counts for URLs.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
